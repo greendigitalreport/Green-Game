@@ -1,0 +1,74 @@
+{
+  "entities": {
+    "Question": {
+      "title": "Question",
+      "description": "A quiz question",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string", "description": "The question text" },
+        "optionA": { "type": "string", "description": "Option A" },
+        "optionB": { "type": "string", "description": "Option B" },
+        "optionC": { "type": "string", "description": "Option C" },
+        "optionD": { "type": "string", "description": "Option D" },
+        "correctOption": { "type": "string", "description": "The correct option (A, B, C, or D)" }
+      },
+      "required": ["text", "optionA", "optionB", "optionC", "optionD", "correctOption"]
+    },
+    "Game": {
+      "title": "Game",
+      "description": "A game session",
+      "type": "object",
+      "properties": {
+        "code": { "type": "string", "description": "4-digit game code" },
+        "status": { "type": "string", "enum": ["waiting", "playing", "finished"], "description": "Current status of the game" },
+        "currentQuestionIndex": { "type": "integer", "description": "Index of the current question" },
+        "questionIds": { "type": "array", "items": { "type": "string" }, "description": "List of question IDs for this game" },
+        "startTime": { "type": "number", "description": "Timestamp when the current question started" }
+      },
+      "required": ["code", "status", "currentQuestionIndex", "questionIds"]
+    },
+    "Player": {
+      "title": "Player",
+      "description": "A player in a game",
+      "type": "object",
+      "properties": {
+        "gameId": { "type": "string", "description": "ID of the game" },
+        "name": { "type": "string", "description": "Player's name" },
+        "score": { "type": "integer", "description": "Player's total score" }
+      },
+      "required": ["gameId", "name", "score"]
+    },
+    "Answer": {
+      "title": "Answer",
+      "description": "A player's answer to a question",
+      "type": "object",
+      "properties": {
+        "playerId": { "type": "string", "description": "ID of the player" },
+        "gameId": { "type": "string", "description": "ID of the game" },
+        "questionId": { "type": "string", "description": "ID of the question" },
+        "selectedOption": { "type": "string", "description": "The option selected by the player" },
+        "isCorrect": { "type": "boolean", "description": "Whether the answer was correct" },
+        "responseTime": { "type": "number", "description": "Time taken to answer in milliseconds" }
+      },
+      "required": ["playerId", "gameId", "questionId", "selectedOption", "isCorrect", "responseTime"]
+    }
+  },
+  "firestore": {
+    "/questions/{questionId}": {
+      "schema": "Question",
+      "description": "Collection of all questions"
+    },
+    "/games/{gameId}": {
+      "schema": "Game",
+      "description": "Collection of game sessions"
+    },
+    "/players/{playerId}": {
+      "schema": "Player",
+      "description": "Collection of players"
+    },
+    "/answers/{answerId}": {
+      "schema": "Answer",
+      "description": "Collection of player answers"
+    }
+  }
+}

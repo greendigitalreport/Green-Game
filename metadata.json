@@ -1,0 +1,5 @@
+{
+  "name": "Green Game",
+  "description": "Un juego de trivia multijugador en tiempo real sobre sostenibilidad, similar a Kahoot.",
+  "requestFramePermissions": []
+}

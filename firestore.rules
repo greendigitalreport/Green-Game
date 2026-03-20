@@ -1,0 +1,66 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isValidQuestion(data) {
+      return data.text is string && data.text.size() > 0 && data.text.size() < 500 &&
+             data.optionA is string && data.optionA.size() > 0 &&
+             data.optionB is string && data.optionB.size() > 0 &&
+             data.optionC is string && data.optionC.size() > 0 &&
+             data.optionD is string && data.optionD.size() > 0 &&
+             data.correctOption in ['A', 'B', 'C', 'D'];
+    }
+
+    function isValidGame(data) {
+      return data.code is string && data.code.matches('^[0-9]{4}$') &&
+             data.status in ['waiting', 'playing', 'finished'] &&
+             data.currentQuestionIndex is int &&
+             data.questionIds is list;
+    }
+
+    function isValidPlayer(data) {
+      return data.gameId is string &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 50 &&
+             data.score is int;
+    }
+
+    function isValidAnswer(data) {
+      return data.playerId is string &&
+             data.gameId is string &&
+             data.questionId is string &&
+             data.selectedOption in ['A', 'B', 'C', 'D'] &&
+             data.isCorrect is bool &&
+             data.responseTime is number;
+    }
+
+    // Questions: Admin can CRUD, players can read
+    match /questions/{questionId} {
+      allow read: if true;
+      allow write: if true; // User requested no auth, admin uses code in frontend
+    }
+
+    // Games: Admin can CRUD, players can read
+    match /games/{gameId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Players: Anyone can create (join), read, and update (score)
+    match /players/{playerId} {
+      allow read: if true;
+      allow create: if isValidPlayer(request.resource.data);
+      allow update: if isValidPlayer(request.resource.data);
+      allow delete: if true;
+    }
+
+    // Answers: Anyone can create
+    match /answers/{answerId} {
+      allow read: if true;
+      allow create: if isValidAnswer(request.resource.data);
+    }
+  }
+}
