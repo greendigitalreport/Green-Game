@@ -113,8 +113,17 @@ const HomeView = ({ setView }: { setView: (v: any) => void }) => (
       className="text-center"
     >
       <div className="flex items-center justify-center mb-4">
-        <div className="bg-green-500 p-4 rounded-3xl shadow-lg">
-          <Leaf className="w-12 h-12 text-white" />
+        <div className="flex items-center justify-center w-32 h-32">
+          <img 
+            src="/logo.png" 
+            alt="Logo" 
+            className="w-full h-full object-contain drop-shadow-xl"
+            onError={(e) => {
+              // Fallback si no hay logo cargado
+              e.currentTarget.style.display = 'none';
+              e.currentTarget.parentElement?.insertAdjacentHTML('afterbegin', '<div class="bg-green-500 p-4 rounded-3xl shadow-lg"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-leaf text-white"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg></div>');
+            }}
+          />
         </div>
       </div>
       <h1 className="text-5xl font-black text-green-800 mb-2">Green Game</h1>
@@ -175,11 +184,15 @@ const AdminLoginView = ({
 const AdminDashboard = ({ 
   questions, 
   createGame, 
-  setView 
+  setView,
+  defaultQuestionTime,
+  setDefaultQuestionTime
 }: { 
   questions: Question[]; 
   createGame: () => void; 
   setView: (v: any) => void;
+  defaultQuestionTime: number;
+  setDefaultQuestionTime: (v: number) => void;
 }) => {
   const [newQ, setNewQ] = useState<Partial<Question>>({
     text: '', optionA: '', optionB: '', optionC: '', optionD: '', correctOption: 'A'
@@ -217,7 +230,30 @@ const AdminDashboard = ({
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
-          <div className="md:col-span-1">
+          <div className="md:col-span-1 space-y-8">
+            <Card>
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <Settings className="w-5 h-5" /> Configuración
+              </h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tiempo por pregunta (segundos)</label>
+                  <select 
+                    value={defaultQuestionTime}
+                    onChange={(e) => setDefaultQuestionTime(Number(e.target.value))}
+                    className="w-full p-2 border rounded-lg bg-white"
+                  >
+                    <option value={10}>10 segundos</option>
+                    <option value={15}>15 segundos</option>
+                    <option value={20}>20 segundos</option>
+                    <option value={30}>30 segundos</option>
+                    <option value={45}>45 segundos</option>
+                    <option value={60}>60 segundos</option>
+                  </select>
+                </div>
+              </div>
+            </Card>
+
             <Card>
               <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                 <Plus className="w-5 h-5" /> Nueva Pregunta
@@ -666,6 +702,7 @@ export default function App() {
   const [lastAnswerCorrect, setLastAnswerCorrect] = useState<boolean | null>(null);
   const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [defaultQuestionTime, setDefaultQuestionTime] = useState(15);
 
   // --- Real-time Listeners ---
 
@@ -723,13 +760,13 @@ export default function App() {
       const q = questions.find(q => q.id === qId);
       if (q) {
         setCurrentQuestion(q);
-        setTimeLeft(15);
+        setTimeLeft(currentGame.questionTime || 15);
         setHasAnswered(false);
         setLastAnswerCorrect(null);
         setShowCorrectAnswer(false);
       }
     }
-  }, [currentGame?.currentQuestionIndex, currentGame?.status, questions]);
+  }, [currentGame?.currentQuestionIndex, currentGame?.status, questions, currentGame?.questionTime]);
 
   // Timer logic
   useEffect(() => {
@@ -770,7 +807,8 @@ export default function App() {
       status: 'waiting',
       currentQuestionIndex: 0,
       questionIds: questions.map(q => q.id),
-      startTime: Date.now()
+      startTime: Date.now(),
+      questionTime: defaultQuestionTime
     };
     const docRef = await addDoc(collection(db, 'games'), newGame);
     setCurrentGame({ id: docRef.id, ...newGame } as Game);
@@ -810,8 +848,9 @@ export default function App() {
     if (hasAnswered || !currentQuestion || !currentPlayer || !currentGame) return;
     
     const isCorrect = option === currentQuestion.correctOption;
-    const responseTime = 15 - timeLeft;
-    const points = isCorrect ? Math.round(1000 * (1 - responseTime / 30)) : 0;
+    const qTime = currentGame.questionTime || 15;
+    const responseTime = qTime - timeLeft;
+    const points = isCorrect ? Math.round(1000 * (1 - responseTime / (qTime * 2))) : 0;
     
     setHasAnswered(true);
     setLastAnswerCorrect(isCorrect);
@@ -868,7 +907,13 @@ export default function App() {
         )}
         {view === 'admin' && (
           <motion.div key="admin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <AdminDashboard questions={questions} createGame={createGame} setView={setView} />
+            <AdminDashboard 
+              questions={questions} 
+              createGame={createGame} 
+              setView={setView} 
+              defaultQuestionTime={defaultQuestionTime}
+              setDefaultQuestionTime={setDefaultQuestionTime}
+            />
           </motion.div>
         )}
         {view === 'player-join' && (

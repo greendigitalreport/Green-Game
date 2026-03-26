@@ -15,6 +15,7 @@ export interface Game {
   currentQuestionIndex: number;
   questionIds: string[];
   startTime?: number; // Timestamp when the current question started
+  questionTime: number; // Duration in seconds for each question
 }
 
 export interface Player {
