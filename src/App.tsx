@@ -246,6 +246,7 @@ const AdminDashboard = ({
                     <option value={10}>10 segundos</option>
                     <option value={15}>15 segundos</option>
                     <option value={20}>20 segundos</option>
+                    <option value={25}>25 segundos</option>
                     <option value={30}>30 segundos</option>
                     <option value={45}>45 segundos</option>
                     <option value={60}>60 segundos</option>
